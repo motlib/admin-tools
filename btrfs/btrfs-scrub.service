@@ -1,0 +1,6 @@
+[Unit]
+Description=btrfs scrub
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/btrfs-scrub

@@ -1,0 +1,49 @@
+#! /bin/bash
+#
+# This is a helper script to be used in a systemd timer or cron job to scrub all
+# mounted btrfs filessytems.
+#
+# Based on script from author 'gbrks'
+#
+# Update email address below
+
+EMAIL_SUBJECT_PREFIX="$HOSTNAME BTRFS - "
+EMAIL_ADDRESS="root@localhost"
+
+LOG_FILE="/var/log/btrfs-scrub.log"
+
+TMP_OUTPUT="/tmp/btrfs-scrub.out"
+
+HOST=$(hostname -f)
+
+# Write once to temp. output to clear existing content.
+echo -n > ${TMP_OUTPUT}
+
+# Write to stdout, log file and temporary file (for mail sending)
+function logprint {
+    echo $1 | tee -a ${LOG_FILE} | tee -a ${TMP_OUTPUT}
+}
+
+# timestamp the job
+logprint "[`date`] btrfs scrub job started on ${HOST}." 
+
+# for each btrfs type system mounted, scrub and record output
+while read d m t x
+do
+  [[ $t != "btrfs" ]] && continue
+  logprint "scrubbing $m"
+  RESULT=$(echo btrfs scrub start -Bd $m)
+  logprint $RESULT
+done < /proc/mounts
+
+logprint "[`date`] btrfs scrub job completed."
+
+echo "Sending mail with status info."
+cat ${TMP_OUTPUT} | 
+    mail \
+        --subject "$EMAIL_SUBJECT_PREFIX Scrub Job Completed" \
+        "$EMAIL_ADDRESS"
+
+rm ${TMP_OUTPUT}
+     
+exit 0
