@@ -32,8 +32,8 @@ while read d m t x
 do
   [[ $t != "btrfs" ]] && continue
   logprint "scrubbing $m"
-  RESULT=$(echo btrfs scrub start -Bd $m)
-  logprint $RESULT
+  RESULT=$(btrfs scrub start -Bd $m)
+  logprint "$RESULT"
 done < /proc/mounts
 
 logprint "[`date`] btrfs scrub job completed."
